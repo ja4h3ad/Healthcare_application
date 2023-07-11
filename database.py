@@ -48,7 +48,7 @@ class Database:
         except Error as e:
             print("Error while connecting to MySQL", e)
 
-    def create_table(self, file_path):
+    def create_patient_table(self, file_path):
         df = pd.read_csv(file_path, index_col=False, delimiter=',')
         print("Port:", self.port)
         try:
@@ -75,6 +75,65 @@ class Database:
                     conn.commit()
         except Error as e:
             print("Error while connecting to MySQL", e)
+
+    def create_doctor_table(self, file_path):
+        # read the file into pandas
+        df = pd.read_csv(file_path, index_col=False, delimiter=',')
+        # Strip double quotes from the specialty column
+        df['specialty'] = df['specialty'].str.strip('"')
+        print("Port:", self.port)
+        try:
+            conn = mysql.connect(host=self.host, user=self.user, password=self.password, port=self.port, database=self.database)
+            if conn.is_connected():
+                cursor = conn.cursor()
+                cursor.execute("select database();")
+                record = cursor.fetchone()
+                print("You're connected to database: ", record)
+                cursor.execute('DROP TABLE IF EXISTS doctorData;')
+                print('Creating table....')
+                cursor.execute(
+                    "CREATE TABLE doctorData(id INT NOT NULL AUTO_INCREMENT, firstName VARCHAR(50), lastName VARCHAR(500), "
+                    "specialty VARCHAR(250), createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
+                    "updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, PRIMARY KEY (id));")
+                print("Table is created....")
+                for i,row in df.iterrows():
+                    sql = "INSERT INTO doctorData (firstName, lastName, specialty)" \
+                          "VALUES (%s,%s,%s)"
+                    cursor.execute(sql, tuple(row))
+                    print("Record inserted")
+                    conn.commit()
+        except Error as e:
+            print("Error while connecting to MySQL", e)
+
+    def create_scheduling_table(self):
+        try:
+            conn = mysql.connect(host=self.host, user=self.user, password=self.password, port=self.port,
+                                 database=self.database)
+            if conn.is_connected():
+                cursor = conn.cursor()
+                cursor.execute("select database();")
+                record = cursor.fetchone()
+                print("You're connected to database: ", record)
+                cursor.execute('DROP TABLE IF EXISTS appointments;')
+                print('Creating table....')
+                cursor.execute(
+                    "CREATE TABLE appointments(appointmentId INT NOT NULL AUTO_INCREMENT, patientID INT,"
+                    "appointmentDateTime DATE, doctorID INT, appointmentType VARCHAR(15), duration VARCHAR(15), "
+                    "status VARCHAR(30), reason VARCHAR(60), "
+                    "createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
+                    "updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, "
+                    "PRIMARY KEY (appointmentId), "
+                    "FOREIGN KEY (patientID) REFERENCES patientData(id), "
+                    "FOREIGN KEY (doctorID) REFERENCES doctorData(id));"
+                )
+                print("Table is created....")
+                conn.commit()
+        except Error as e:
+            print("Error while connecting to MySQL", e)
+
+
+
+
 
 
 
