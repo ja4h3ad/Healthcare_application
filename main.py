@@ -7,7 +7,8 @@ def launch_app():
     app = Flask(__name__)
 
     # Instantiate the Database class
-    db = Database(host='your_host', user='your_user', password='your_password', port='your_port', database='your_database')
+
+    db = Database(host=, user='your_user', password='your_password', port='your_port', database='your_database')
 
     # Register the blueprints for the webhook, passing the db instance as a parameter
     app.register_blueprint(webhook)
@@ -17,5 +18,5 @@ def launch_app():
 # Entry point of the application
 if __name__ == '__main__':
     app = launch_app()
-    app.run(port=5002)
+    app.run(port=5003)
 

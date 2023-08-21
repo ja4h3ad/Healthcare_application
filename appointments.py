@@ -24,16 +24,10 @@ class Appointments:
         self.duration = duration
         self.status = status
         self.reason = reason
+        self.createdAt = createdAt or datetime.now()
+        self.updatedAt = updatedAt or datetime.now()
 
-        if createdAt:
-            self.createdAt = datetime.strptime(str(createdAt), "%Y-%m-%d %H:%M:%S")
-        else:
-            self.createdAt = datetime.now()
 
-        if updatedAt:
-            self.updatedAt = datetime.strptime(str(updatedAt), "%Y-%m-%d %H:%M:%S")
-        else:
-            self.updatedAt = datetime.now()
 
 
 

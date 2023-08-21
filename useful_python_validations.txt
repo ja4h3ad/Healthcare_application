@@ -1,0 +1,58 @@
+## app startup
+
+db = Database()  # Create an instance of the Database class
+db.create_database(name='EHR')  # Call the create_database() method on the instance
+Database created successfully.
+db.create_patient_table('patient_seed.csv')
+db.create_doctor_table('doctor_seed.csv')
+db.create_scheduling_table()
+
+
+
+
+1.  In a new terminal, first import the database class
+from database import Database
+# Create an instance of the Database class
+db = Database()
+
+# Replace `patient_id_to_query` with the actual patient ID you want to query
+patient_id_to_query = <patient_id>
+
+# Call the method to get patient appointments
+appointments = db.get_patient_appointments(patient_id_to_query)
+
+# Print the appointments
+for appointment in appointments:
+    print(appointment)
+
+# Connect to the database
+import mysql.connector
+conn = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    password="admin",
+    database="EHR",
+    port = 3307
+
+)
+
+# encapsulate any SQL query as such
+query = """
+    SELECT COLUMN_NAME, DATA_TYPE
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'your_database_name'
+      AND TABLE_NAME = 'appointments'
+      AND COLUMN_NAME = 'appointmentDateTime'
+      AND DATA_TYPE = 'datetime';
+"""
+
+# Run query through python and print:
+
+cursor.execute(query)
+result = cursor.fetchall()
+print(result)
+
+# clean up
+cursor.close()
+conn.close()
+

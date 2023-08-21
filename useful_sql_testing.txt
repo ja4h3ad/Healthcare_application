@@ -1,0 +1,72 @@
+# QA test to ensure that tables are created when running table creation functions
+
+SELECT EXISTS (
+  SELECT 1
+  FROM information_schema.tables
+  WHERE table_schema = 'EHR'
+    AND table_name = 'appointments'
+) AS table_exists;
+
+# retrieve the table structure
+DESCRIBE appointments;
+
+# upon creation of the appointments table, constrain the table to only allow unique appointments
+ALTER TABLE appointments ADD CONSTRAINT unique_appointment UNIQUE (appointmentDateTime, patientID, doctorID);
+
+## verify that a patient is in the database and you can use the id as a parameter in downstrem tasks
+SELECT *
+FROM `patientData`
+WHERE id = 1;
+
+# To constrain the availability for appointments and only retrieve appointment options on Mondays through Fridays,
+# - `appointmentDateTime` is the column in the appointments table that stores the date and time of the appointment.
+# - The `DAYOFWEEK` function is a MySQL date function that returns the weekday index of a given date (1 for Sunday, 2 for Monday, and so on).
+# - The `BETWEEN` operator is used to specify the range of weekdays you want to include, in this case, Monday (2) through Friday (6).
+# By using the `DAYOFWEEK` function and the `BETWEEN` operator in the WHERE clause, the query filters the appointments to only include those falling on weekdays (Monday to Friday).
+
+SELECT appointmentDateTime
+FROM appointments
+WHERE DAYOFWEEK(appointmentDateTime) BETWEEN 2 AND 6;
+
+# To check for available appointments that have been scheduled, you would need to modify the query to retrieve booked appointments rather than available ones.
+SELECT appointmentDateTime
+FROM appointments
+WHERE DAYOFWEEK(appointmentDateTime) BETWEEN 2 AND 6
+  AND appointmentStatus = 'booked';
+
+# the INSERT statement specifies the column names (appointmentDateTime, patientID, doctorID, etc.)
+INSERT INTO appointments (appointmentDateTime, patientID, doctorID, appointmentType, duration, status, reason)
+VALUES ('2023-07-12 09:00:00', 123, 456, 'check-up', '30 minutes', 'scheduled', 'Annual check-up');
+
+# verify appointments for patient and doctor
+SELECT *
+FROM appointments
+WHERE patientID = 1 AND doctorID = 2;
+
+# Retrieve an existing appointment based on patientID, this is useful for the Studio webhook when a use wants to confirm an appointment
+SELECT *
+FROM appointments
+WHERE patientID = 3;
+
+# Delete appointments for user
+DELETE FROM appointments WHERE patientID = <patient_id>;
+
+
+# This will connect to my database and then display if there are any given appointments for patientID8
+USE EHR;
+SELECT * FROM appointments WHERE patientID = 8;
+
+SELECT COLUMN_NAME, DATA_TYPE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_SCHEMA = 'EHR'
+  AND TABLE_NAME = 'appointments'
+  AND COLUMN_NAME = 'appointmentDateTime'
+  AND DATA_TYPE = 'datetime';
+
+SHOW COLUMNS FROM appointments LIKE 'appointmentDateTime';
+
+
+# when SQL is being finicky with my python:
+
+ALTER TABLE appointments
+MODIFY appointmentDateTime DATETIME;

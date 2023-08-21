@@ -92,8 +92,8 @@ class Database:
                 cursor.execute('DROP TABLE IF EXISTS doctorData;')
                 print('Creating table....')
                 cursor.execute(
-                    "CREATE TABLE doctorData(id INT NOT NULL AUTO_INCREMENT, firstName VARCHAR(50), lastName VARCHAR(500), "
-                    "specialty VARCHAR(250), createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
+                    "CREATE TABLE doctorData(id INT NOT NULL AUTO_INCREMENT, firstName VARCHAR(50), lastName VARCHAR(100), "
+                    "specialty VARCHAR(1000), createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
                     "updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, PRIMARY KEY (id));")
                 print("Table is created....")
                 for i,row in df.iterrows():
@@ -118,7 +118,7 @@ class Database:
                 print('Creating table....')
                 cursor.execute(
                     "CREATE TABLE appointments(appointmentId INT NOT NULL AUTO_INCREMENT, patientID INT,"
-                    "appointmentDateTime DATE, doctorID INT, appointmentType VARCHAR(15), duration VARCHAR(15), "
+                    "appointmentDateTime DATETIME, doctorID INT, appointmentType VARCHAR(200), duration VARCHAR(15), "
                     "status VARCHAR(30), reason VARCHAR(60), "
                     "createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
                     "updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, "
@@ -131,6 +131,22 @@ class Database:
         except Error as e:
             print("Error while connecting to MySQL", e)
 
+    def get_patient_appointments(self, patient_id):
+        try:
+            conn = self.connect()
+            if conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "SELECT * FROM appointments WHERE patientID = %s", (patient_id,)
+                )
+                appointments = cursor.fetchall()
+                return appointments
+        except Error as e:
+            print("Error while connecting to MySQL", e)
+        finally:
+            if conn and conn.is_connected():
+                cursor.close()
+                conn.close()
 
 
 
