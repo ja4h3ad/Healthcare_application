@@ -2,6 +2,9 @@ from flask import Flask, request, jsonify
 from database import Database
 from patient import Patient
 from datetime import datetime
+from common_dependencies import ChatOpenAI
+from common_dependencies import load_qa_chain
+from rag_app import initialize_chroma_db
 from appt_mappings import duration_mapping, status_mapping, reason_mapping
 # load imports
 import os
@@ -10,7 +13,7 @@ from dotenv import load_dotenv
 import vonage
 dotenv_path = join(dirname(__file__), ".env")
 load_dotenv(dotenv_path)
-
+from rag_app import initialize_rag_pipeline, get_compressed_docs
 app = Flask(__name__)
 
 
@@ -176,21 +179,34 @@ def create_appointment():
     return jsonify({'message': 'Invalid appointment route'}), 400
 
 
-# App routes for Vonage Meetings API
-# fetch the Vonage Application ID from .env - this is important to generate the JWT
-VONAGE_APPLICATION_ID = os.environ.get("VONAGE_APPLICATION_ID")
-# fetch the private key path generated from the project settings from .env - this is important to generate the JWT
-VONAGE_APPLICATION_PRIVATE_KEY_PATH = os.environ.get("VONAGE_APPLICATION_PRIVATE_KEY_PATH")
 
-# # create meeting room theme based on service provider name
-# @app.route("/create_meeting_theme")
-# def create_meeting_room():
-#     main_color = #f3f6f4
-#     brand_text =
-#     return
-
+@app.route('/rag_question', methods=['POST'])
+def rag_question():
+    # collect the user question from json
+    data = request.get_json()
+    question = data.get('question')
+    print(question)
+    # initialize the rag pipeline by instantiating the chroma_db
+    db_connection = initialize_chroma_db()
+    # initialize the langchain components
+    # designed to improve the answers returned from vector store document similarity searches through
+    # the context from the query.
+    llm = ChatOpenAI(temperature=0)
+    chain = load_qa_chain(llm, chain_type='stuff')
+    # perform query operations using langchain and persisted db
+    docs = db_connection.similarity_search(question)
+    # Convert 'docs' into a list of dictionaries for JSON serialization
+    docs_list = [{"page_content": doc.page_content} for doc in docs]
+    print(docs)
+    res = chain.run(input_documents=docs, question=question)
+    response = {
+        "response": res,
+        "docs": docs_list
+    }
+    print(res)
+    return jsonify({"response": response})
 
 
 if __name__ == '__main__':
-    app.run(port=5003)
+    app.run(port=5003, debug=True)
 
