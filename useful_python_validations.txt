@@ -2,7 +2,6 @@
 
 db = Database()  # Create an instance of the Database class
 db.create_database(name='EHR')  # Call the create_database() method on the instance
-Database created successfully.
 db.create_patient_table('patient_seed.csv')
 db.create_doctor_table('doctor_seed.csv')
 db.create_scheduling_table()
